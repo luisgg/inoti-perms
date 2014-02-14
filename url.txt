@@ -1,0 +1,1 @@
+http://positon.org/a-solution-to-the-umask-problem-inotify-to-force-permissions

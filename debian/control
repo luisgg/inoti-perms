@@ -1,0 +1,13 @@
+Source:  inoti-perms
+Section: admin
+Priority: optional
+Maintainer: Luis Antonio Garcia Gisbert <luisgg@gmail.com>
+Build-Depends: debhelper (>= 7.0)
+Standards-Version: 3.8.4
+
+Package: inoti-perms
+Architecture: all
+Depends: ${misc:Depends},inotify-tools
+Description: force some file permissions using inotify
+ Wait for changes in filesystem using inotify and change required
+ file permissions automagically with no modification of related applications
