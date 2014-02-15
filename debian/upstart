@@ -1,0 +1,52 @@
+# start/stop multiple inotiwait instances from a simple upstart service job
+# "inspiration" (and part of the code too ;-) ) was taken from http://positon.org/a-solution-to-the-umask-problem-inotify-to-force-permissions
+# Special thanks to dooblem (Marc MAURICE) for his post. Thanks also to the rest of contributors.
+
+description     "launch inotiwait to change permissions in required dirs"
+
+start on filesystem
+stop on runlevel [016]
+
+respawn
+respawn limit 10 5
+umask 022
+
+#console none
+
+# Variables
+# ---------
+
+# inoti-perms logs and pids dirs
+env INOTI_LOGS="/var/log/inoti-perms"
+#env INOTI_PIDS="/var/run/inoti-perms"
+env INOTI_CONF="/etc/inoti-perms/conf.d/prueba.conf"
+
+# export all stuff
+export INOTI_LOGS INOTI_CONF
+
+pre-start script
+	[ "$INOTI_CONF" ] || { stop; exit 0; }
+	[ -r "$INOTI_CONF" ] || { stop; exit 0; }
+	. $INOTI_CONF
+
+	INOTI_BASENAME="$(basename "$INOTI_CONF")"
+	INOTI_LOGFILE="$INOTI_LOGS/$INOTI_BASENAME.log"
+
+	[ "$INOTI_DIR" ] || { stop; exit 0; }
+	[ -d "$INOTI_DIR" ] || { stop; exit 0; }
+	[ "$INOTI_EVENTS" ] || { stop; exit 0; }
+	[ "$INOTI_PERMS" ] || { stop; exit 0; }
+
+	mkdir -p "$INOTI_LOGS"
+#	mkdir -p "$INOTI_PIDS"
+	rm -f "$INOTI_LOGFILE"
+end script
+
+script
+	. $INOTI_CONF
+        INOTI_EVENTS="$(echo $INOTI_EVENTS |sed -e "s%^% %;s% % -e %g")"
+
+	#exec inoti-perms "$INOTI_PERMS" -mrq $INOTI_EVENTS= --format %w%f "$INOTI_DIR" >$INOTI_LOGFILE 2>&1 
+#	exec /usr/sbin/inoti-perms "$INOTI_PERMS" -mrq $INOTI_EVENTS= --format %w%f "$INOTI_DIR"
+	exec /usr/bin/inotifywait  -mrq $INOTI_EVENTS --format %w%f "$INOTI_DIR" | while IFS= read -r FILE; do chmod $INOTI_PERMS "$FILE"; done
+end script
