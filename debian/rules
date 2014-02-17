@@ -5,4 +5,4 @@
 
 override_dh_installinit:
 	dh_installinit
-	dh_installinit --name=inoti-perms-instance
+	dh_installinit --upstart-only --name=inoti-perms-instance
