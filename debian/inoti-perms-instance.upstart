@@ -1,0 +1,49 @@
+# inoti-perms per instance job
+# launchs one inotifywait instance to process changes in a single directory
+# Special thanks to dooblem (Marc MAURICE) for his post. Thanks also to the rest of contributors.
+
+description     "launch single inotifywait instance to change permissions in just one directory"
+
+stop on runlevel [016]
+
+respawn
+respawn limit 10 5
+umask 022
+
+#console none
+
+# Variables
+# ---------
+
+instance $CONFNAME
+
+# export all stuff
+export CONFNAME
+
+script
+	[ "$CONFNAME" ] || { stop; exit 0; }
+
+	INOTI_LOG="/var/log/inoti-perms/$CONFNAME.log"
+	INOTI_PID="/var/run/inoti-perms/$CONFNAME.pid"
+	INOTI_CONF="/etc/inoti-perms/conf.d/$CONFNAME.conf"
+
+	[ -r "$INOTI_CONF" ] || { stop; exit 0; }
+	. $INOTI_CONF
+
+	[ "$INOTI_DIR" ] || { stop; exit 0; }
+	[ -d "$INOTI_DIR" ] || { stop; exit 0; }
+	[ "$INOTI_EVENTS" ] || { stop; exit 0; }
+	[ "$INOTI_PERMS" ] || { stop; exit 0; }
+
+	mkdir -p "$(dirname "$INOTI_LOG")"
+	mkdir -p "$(dirname "$INOTI_PIDS")"
+	rm -f "$INOTI_LOG" "$INOTI_PID"
+
+        INOTI_EVENTS="$(echo $INOTI_EVENTS |sed -e "s%^% %;s% % -e %g")"
+
+	# create pidfile
+	echo $$ > "$INOTI_PID"
+	#exec inoti-perms "$INOTI_PERMS" -mrq $INOTI_EVENTS= --format %w%f "$INOTI_DIR" >$INOTI_LOGFILE 2>&1 
+#	exec /usr/sbin/inoti-perms "$INOTI_PERMS" -mrq $INOTI_EVENTS= --format %w%f "$INOTI_DIR"
+	exec /usr/bin/inotifywait  -mrq $INOTI_EVENTS --format %w%f "$INOTI_DIR" | while IFS= read -r FILE; do { chmod $INOTI_PERMS "$FILE"; ls -l "$FILE" >> $INOTI_LOG; }  ; done
+end script

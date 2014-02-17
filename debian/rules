@@ -3,3 +3,6 @@
 %:
 	dh $@ --parallel
 
+override_dh_installinit:
+	dh_installinit
+	dh_installinit --name=inoti-perms-instance

@@ -1,0 +1,11 @@
+# Configuration files reside in /etc/inoti-perms/conf.d/ as files endinf in .conf
+# There are tree variables required:
+
+INOTI_DIR="Directory to scan"
+# directory must exists before starting service
+
+INOTI_EVENTS="space separated list of events to watch"
+# valid events are (see inotifywait manpage for explanation):
+# access modify attrib close_write close_nowrite close open moved_to moved_from move move_self create delete delete_self unmount
+
+INOTI_PERMS="parameters for chmod command"
